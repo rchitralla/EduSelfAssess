@@ -12,78 +12,60 @@ logo_path = "Logo.png"
 
 # Define the categories, types, and questions
 categories = {
-    "General": {
-        "Individual Actions": [
-            "I speak up when members of my team say things that are rooted in stereotype or assumption",
-            "I get involved with and build strong, meaningful partnerships with communities of/organisations that support historically marginalised groups",
-            "I intentionally give equal attention to people from all backgrounds",
-            "I value dissenting opinions, even when it makes me uncomfortable",
-            "I regularly examine my most frequent connections and consider how I can further diversify the perspectives and experiences of those around me",
-            "I consider multiple sources of data when making decisions and I don’t rely too often on 'gut reaction'"
+    "Equity & Inclusion Self-Assessment": {
+        "Build your knowledge": [
+            "I learn about people who are different to me.",
+            "I invest time in learning about equity & inclusion.",
+            "I leverage insights from Employee Resource Groups (or equivalent) to impact business outcomes."
         ],
-        "Institution Actions": [
-            "I encourage everyone in my team to speak up when they hear things that are rooted in stereotype or assumption",
-            "When I launch a new project or piece of work, I review the team assigned to ensure it's fully diverse, and take action if it’s not",
-            "I encourage dissenting opinions to be shared across the team",
-            "I encourage my team members to get involved Employee Resource Groups",
-            "I proactively seek insights from various Employee Resource Groups to make my function/team/department better"
-        ]
-    },
-    "Recruiting & Hiring": {
-        "Individual Actions": [
-            "When hiring a member of my direct team, I hold off on making a selection decision until there is a balanced slate of candidates",
-            "When interviewing for a new team member, I use structured interview guides and rate all candidates according to consistent criteria and job requirements",
-            "Every new member of my direct team takes inclusion/unconscious bias training when they start in a new role"
+        "Amplify voices": [
+            "When developing ideas or making decisions, I ask 'Whose perspective are we missing?'",
+            "I advocate for individuals from marginalised groups when they’re not in the room.",
+            "I give credit to individuals whose voices are often overlooked or unheard."
         ],
-        "Institution Actions": [
-            "My function has institutionalised a balanced slate policy. (A balanced or diverse slate ensures that shortlisted candidates for a position come from a variety of backgrounds, identities and experiences)",
-            "My function requires structured interviews or diverse interview panels for all open roles",
-            "My function has embedded inclusion/unconscious bias training into new hire onboarding"
-        ]
-    },
-    "Culture & Engagement": {
-        "Individual Actions": [
-            "I evaluate my use of language and avoid terms/phrases that may unintentionally be degrading or hurtful to people different than me"
+        "Explore & grow": [
+            "I am aware of and challenge my own biases and assumptions.",
+            "I seek feedback about the impact of my actions & behaviours on others.",
+            "I take feedback seriously and course correct."
         ],
-        "Institution Actions": [
-            "I participate in and support the review of policies & practices across all functions (not just HR) to ensure these are inclusive and free from bias"
-        ]
-    },
-    "Development": {
-        "Individual Actions": [
-            "I actively sponsor and mentor employees from historically marginalised groups",
-            "I regularly mentor and sponsor women/people from historically marginalised groups outside of my organisation and across my industry",
-            "I hold the members of my team accountable for mentoring and sponsoring employees from historically marginalised groups (and incorporate this into annual performance reviews)",
-            "I create detailed individual development plans for every member of my team"
+        "Speak out": [
+            "I say something when I hear people make comments that are rooted in stereotype or assumption.",
+            "If I notice someone is being talked over or dismissed, I draw attention to it.",
+            "I challenge inequities and unfair practices when I witness them."
         ],
-        "Institution Actions": [
-            "I visibly support the formal mentoring and sponsorship programmes my organisation implements",
-            "I monitor my team’s participation in training programmes to ensure employees from all different backgrounds are included",
-            "I outwardly support ongoing inclusion/unconscious bias training for all employees"
-        ]
-    },
-    "Performance & Reward": {
-        "Individual Actions": [
-            "I regularly review and address bias/equity in pay decisions",
-            "When conducting performance reviews, I review performance ratings distributions by demographic to identify potential bias"
+        "Practise self-compassion": [
+            "I accept that I will make mistakes.",
+            "I see my mistakes as opportunities to listen, learn, and improve, without dwelling on them.",
+            "If I unintentionally make a mistake, I apologise, correct myself and move on."
         ],
-        "Institution Actions": [
-            "I visibly support the systemic review of pay equity and performance rating distributions by demographic group annually"
+        "Make equitable & inclusive decisions": [
+            "I ensure diverse perspectives are included when developing products and services.",
+            "I prioritise equity when making hiring, promotion and other critical people decisions.",
+            "I evaluate and measure the outcomes of my decisions across different populations."
         ],
-        "Industry Actions": [
-            "I visibly support the public publication of pay equity results and our plans to mitigate any gaps"
-        ]
-    },
-    "Exit & Retain": {
-        "Individual Actions": [
-            "I personally and intentionally speak to critical employees from all different backgrounds to explore exit and stay reasons"
+        "Centre the experiences of others": [
+            "I actively listen to the experiences of others without being judgmental or defensive.",
+            "I believe others’ experiences and challenge my own assumptions.",
+            "In discussions, I intentionally hold back from sharing my view, until others have shared their own perspectives."
         ],
-        "Institution Actions": [
-            "My function regularly conducts exit interviews",
-            "My function takes necessary actions to improve the retention of people from all backgrounds"
+        "Drive accountability": [
+            "I establish equity & inclusion goals that tie to business performance.",
+            "I hold all team members accountable for creating an inclusive environment.",
+            "I reward equitable & inclusive behaviours."
+        ],
+        "Create safe spaces for dialogue": [
+            "At the beginning of group discussions, I remind participants to give each other their full attention.",
+            "I share my experiences with equity and inclusion to build trust and connection with others.",
+            "I invite people to raise concerns, even if it feels uncomfortable."
+        ],
+        "Create sustainable change": [
+            "I use a data-driven approach to develop and evaluate policies.",
+            "I elevate equity & inclusion when developing and executing strategic plans.",
+            "I make equity & inclusion a priority when collaborating with others from different parts of the value chain."
         ]
     }
 }
+
 
 # Flattened list of questions to display without headers
 questions_list = []
@@ -218,7 +200,7 @@ def generate_pdf(total_scores_per_category, max_scores_per_category, chart_image
         st.write(e)
 
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(margin, y, "LEAD Network Anti-Bias Self Assessment Tool")
+    c.drawString(margin, y, "All In- Journeys- Self-Assessment")
     y -= 20
     c.setFont("Helvetica", 10)
     c.drawString(margin, y, "Your results:")
