@@ -10,7 +10,10 @@ import matplotlib.pyplot as plt
 # Path to the logo image
 logo_path = "Logo.png"
 
-# Define the categories, types, and questions
+###############################################################################
+# 1. Define categories, questions, and rating scale
+###############################################################################
+
 categories = {
     "Equity & Inclusion Self-Assessment": {
         "Build your knowledge": [
@@ -66,8 +69,7 @@ categories = {
     }
 }
 
-
-# Flattened list of questions to display without headers
+# Flattened list of questions
 questions_list = []
 for category_name, types in categories.items():
     for type_name, questions in types.items():
@@ -78,14 +80,57 @@ for category_name, types in categories.items():
                 "question": question
             })
 
-# Function to display questions and collect responses
+###############################################################################
+# 2. Helper functions for allyship scale, PDF generation, and scoring
+###############################################################################
+
+def get_allyship_scale_text(total_score):
+    """
+    Returns paragraphs describing the user's position on the allyship scale
+    based on the overall total_score. Adjust text/cutoffs to your needs.
+    """
+    # Example cutoffs: <30, 30–90, 90–110, 110–120
+    # Adjust these if your total number of questions changes significantly.
+    if total_score < 30:
+        return [
+            ("Below 30: Just Starting", "bold"),
+            ("It looks like you’re just getting started on this journey.", "normal"),
+            ("(Optionally add any supportive text here...)", "normal"),
+        ]
+    elif total_score <= 90:
+        return [
+            ("30–90: Consciously Relearning", "bold"),
+            ("You are on an important journey of self-education!", "normal"),
+            ("Unlearning, relearning and changing behaviour takes time – be patient and stay committed.", "normal"),
+            ("Listening and centring the experience of others will be key to elevating your allyship development.", "normal"),
+        ]
+    elif total_score <= 110:
+        return [
+            ("90–110: Adapting & Centering Others", "bold"),
+            ("You are on an important journey of self-education!", "normal"),
+            ("Unlearning, relearning and changing behaviour takes time – be patient and stay committed.", "normal"),
+            ("Listening and centring the experience of others will be key to elevating your allyship development.", "normal"),
+        ]
+    else:
+        # 110–120 or above
+        return [
+            ("110–120: Challenging & Sponsoring", "bold"),
+            ("As a consciously inclusive leader, you seek out and amplify under-represented perspectives during decision-making.", "normal"),
+            ("You call out unfair practices when you notice them.", "normal"),
+            ("Incentivising others and driving systemic change beyond your immediate function or business will be key to elevating your allyship further.", "normal"),
+        ]
+
 def display_questions():
+    """
+    Display each question as a selectbox with the rating scale (1..4).
+    Return a list of dictionaries capturing the user's score.
+    """
     responses = []
+    # Rating scale: 1..4
+    options = [1, 2, 3, 4]
     for item in st.session_state['shuffled_questions']:
         st.write(item["question"])
-        options = [1, 2, 3, 4, 5]
         key = f"{item['category']}_{item['type']}_{item['question']}"
-
         if key not in st.session_state:
             st.session_state[key] = 1
 
@@ -104,12 +149,9 @@ def display_questions():
         })
     return responses
 
-# Function to calculate the total score
 def calculate_total_score(responses):
-    total_score = sum(response['score'] for response in responses if response['score'] is not None)
-    return total_score
+    return sum(response['score'] for response in responses if response['score'] is not None)
 
-# Function to calculate the total score per category
 def calculate_total_scores_per_category(responses):
     total_scores_per_category = {}
     for response in responses:
@@ -122,16 +164,20 @@ def calculate_total_scores_per_category(responses):
         total_scores_per_category[category] += score
     return total_scores_per_category
 
-# Function to calculate the maximum possible score per category
 def calculate_max_scores_per_category(categories):
+    """
+    Calculates the max possible score (4 per question) for each category.
+    """
     max_scores_per_category = {}
     for category_name, types in categories.items():
         total_questions = sum(len(questions) for questions in types.values())
-        max_scores_per_category[category_name] = total_questions * 4  # Maximum score is 4 per question
+        max_scores_per_category[category_name] = total_questions * 4  # 4 is the max rating
     return max_scores_per_category
 
-# Function to create custom progress bar
 def custom_progress_bar(percentage, color="#377bff"):
+    """
+    Creates a horizontal progress bar with the given percentage and color in Streamlit.
+    """
     st.markdown(
         f"""
         <div style="width: 100%; background-color: #e0e0e0; border-radius: 5px;">
@@ -143,16 +189,19 @@ def custom_progress_bar(percentage, color="#377bff"):
         unsafe_allow_html=True
     )
 
-# Function to create custom bar chart
 def custom_bar_chart(scores_data):
+    """
+    Displays a bar chart per category, showing the percentage for each sub-type.
+    Returns a list of chart images (in-memory) so we can embed them in the PDF.
+    """
     st.markdown("<h3>Self Assessment Scores by Category and Type</h3>", unsafe_allow_html=True)
     chart_images = []
     for category in scores_data["Category"].unique():
         st.markdown(f"### {category}", unsafe_allow_html=True)
         category_data = scores_data[scores_data["Category"] == category]
-        category_data = category_data.sort_values(by=["Type"], ascending=[False])  # Ensure consistent order
+        category_data = category_data.sort_values(by=["Type"], ascending=[False])
 
-        fig, ax = plt.subplots(figsize=(10, 4))  # Increase the height for better readability
+        fig, ax = plt.subplots(figsize=(10, 4))
         ax.barh(category_data["Type"], category_data["Percentage"], color='#377bff')
         ax.set_xlim(0, 100)
         ax.set_xlabel('Percentage', fontsize=12)
@@ -161,14 +210,16 @@ def custom_bar_chart(scores_data):
         plt.tight_layout()
         
         buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=300)  # Increase DPI for better resolution
+        plt.savefig(buf, format='png', dpi=300)
         buf.seek(0)
         chart_images.append(buf)
         st.image(buf)
     return chart_images
 
-# Function to wrap text for the PDF
 def wrap_text(text, canvas, max_width, font_size):
+    """
+    Splits a text string into multiple lines so it fits in 'max_width' on the PDF.
+    """
     lines = []
     words = text.split()
     while words:
@@ -178,37 +229,46 @@ def wrap_text(text, canvas, max_width, font_size):
         lines.append(line.strip())
     return lines
 
-# Function to generate PDF
-def generate_pdf(total_scores_per_category, max_scores_per_category, chart_images):
+def generate_pdf(total_scores_per_category, max_scores_per_category, chart_images, total_score):
+    """
+    Builds a multi-page PDF with:
+      - Scores per category
+      - Allyship scale text based on overall total_score
+      - Custom bar charts
+    (Explanations removed as requested.)
+    """
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
     margin = 40
     y = height - margin
 
-    # Add the logo
+    # Try adding a logo at the top
     try:
         logo = ImageReader(logo_path)
         logo_width, logo_height = logo.getSize()
         aspect_ratio = logo_height / logo_width
         logo_display_width = 60
         logo_display_height = logo_display_width * aspect_ratio
-        c.drawImage(logo, margin, y - logo_display_height, width=logo_display_width, height=logo_display_height)
+        c.drawImage(logo, margin, y - logo_display_height, 
+                    width=logo_display_width, height=logo_display_height)
         y -= (logo_display_height + 20)
     except Exception as e:
         st.error("Logo image not found or could not be loaded.")
         st.write(e)
 
+    # PDF Title
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(margin, y, "All In- Journeys- Self-Assessment")
+    c.drawString(margin, y, "LEAD Network Anti-Bias Self Assessment Tool")
     y -= 20
     c.setFont("Helvetica", 10)
     c.drawString(margin, y, "Your results:")
     y -= 15
 
+    # Display category scores
     for category_name, score in total_scores_per_category.items():
         max_score = max_scores_per_category[category_name]
-        progress = int((score / max_score) * 100)
+        progress = int((score / max_score) * 100) if max_score > 0 else 0
         line = f"{category_name}: {score} out of {max_score} ({progress}%)"
         if y - 15 < margin:
             c.showPage()
@@ -216,62 +276,30 @@ def generate_pdf(total_scores_per_category, max_scores_per_category, chart_image
         c.drawString(margin, y, line)
         y -= 15
 
-    y -= 10  # Extra space before explanations
+    y -= 10
 
-    # Add explanations with bold headers
-    explanations = [
-        ("How to interpret the results", "bold"),
-        ("The questions answered fall under the individual, company, and industry related actions and choices you make every day at work.", "normal"),
-        ("They address key areas from hiring through developing and retaining talent that we as company leaders make in relation to our peers, team members, superiors, and creating a broader impact on the industry.", "normal"),
-        ("Take a look at the scores below and see:", "normal"),
-        ("- Where do you score highest?", "normal"),
-        ("- Which area has the highest potential to improve?", "normal"),
-        ("- Is there anything that surprised you?", "normal"),
-        ("- What are some of the actions that you can take to reduce bias and drive inclusion?", "normal"),
-        ("", "normal"),  # Add a blank line for more space
-        ("Capture your reflection for a later conversation.", "normal"),
-        ("Development: Spans actions in the area of developing talent/your team", "bold_pre"),
-        ("General: Covers general work related attitudes and actions", "bold_pre"),
-        ("Recruiting & Hiring: Highlights potential bias in recruiting and hiring talent", "bold_pre"),
-        ("Performance & Reward: Looks at equity in relation to this area of rewarding the team", "bold_pre"),
-        ("Culture & Engagement: Your actions and attitudes related to organisational culture", "bold_pre"),
-        ("Exit & Retention: Actions related to retaining and understanding the reasons for talent drain", "bold_pre")
-    ]
-
-    for explanation, style in explanations:
+    # --------------------------------------------------------------------------
+    # Insert Allyship Scale section (based on total_score)
+    # --------------------------------------------------------------------------
+    allyship_scale_text = get_allyship_scale_text(total_score)
+    for (paragraph, style) in allyship_scale_text:
         if style == "bold":
             c.setFont("Helvetica-Bold", 10)
-            lines = wrap_text(explanation, c, width - 2 * margin, 10)
-        elif style == "bold_pre":
-            text, remainder = explanation.split(":", 1)
-            lines = wrap_text(text + ":", c, width - 2 * margin, 10)
-            c.setFont("Helvetica-Bold", 10)
-            for line in lines:
-                if y - 15 < margin:
-                    c.showPage()
-                    y = height - margin
-                c.drawString(margin, y, line)
-                y -= 12
-            c.setFont("Helvetica", 10)
-            lines = wrap_text(remainder.strip(), c, width - 2 * margin, 10)
         else:
             c.setFont("Helvetica", 10)
-            lines = wrap_text(explanation, c, width - 2 * margin, 10)
-
+        lines = wrap_text(paragraph, c, width - 2*margin, 10)
         for line in lines:
             if y - 15 < margin:
                 c.showPage()
                 y = height - margin
             c.drawString(margin, y, line)
             y -= 12
-        y -= 5  # Add extra space between sections
+        y -= 5  # extra spacing
 
-    # Start a new page for the charts
+    # Go to a new page for the charts
     c.showPage()
 
-    # Embed charts into the PDF, spread across up to 3 pages
-    charts_per_page = 2  # Adjust as desired for better readability
-
+    charts_per_page = 2  
     chart_index = 0
     for page in range(3):
         y = height - 50
@@ -282,7 +310,8 @@ def generate_pdf(total_scores_per_category, max_scores_per_category, chart_image
             if y - 320 < margin:
                 c.showPage()
                 y = height - 50
-            c.drawImage(ImageReader(img), margin, y - 300, width=width - 2 * margin, height=300)
+            c.drawImage(ImageReader(img), margin, y - 300, 
+                        width=width - 2 * margin, height=300)
             y -= 320
             chart_index += 1
         if chart_index >= len(chart_images):
@@ -291,17 +320,19 @@ def generate_pdf(total_scores_per_category, max_scores_per_category, chart_image
 
     c.save()
     buffer.seek(0)
-
     return buffer
 
+###############################################################################
+# 3. Main Streamlit UI
+###############################################################################
+
 def main():
-    # --- Initialize or update your unique visits counter in session state ---
     if 'unique_visits' not in st.session_state:
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
     
     try:
-        st.image(logo_path, width=200)  # Add your logo at the top
+        st.image(logo_path, width=200)
     except Exception as e:
         st.error("Logo image not found. Please check the path to the logo image.")
         st.write(e)
@@ -313,79 +344,45 @@ def main():
     )
     st.write(
         "Read each statement and choose a score using the rating scale provided. "
-        "Once complete, the tool subtotals the scores by section. Reflect on areas where your scores are lower than others and identify where you can continue to grow. "
-        "The assessment should take you no longer than 5 – 10 mins."
+        "Once complete, the tool subtotals the scores by section. Reflect on areas where your scores are lower than others and "
+        "identify where you can continue to grow. The assessment should take you no longer than 5 – 10 mins."
     )
-    st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often | 5 = Consistently all the time")
+    st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
-    # Shuffle questions once per session
     if 'shuffled_questions' not in st.session_state:
         st.session_state['shuffled_questions'] = questions_list.copy()
         random.shuffle(st.session_state['shuffled_questions'])
 
-    # Display the questions and collect responses
+    # Display the questions
     responses = display_questions()
 
-    # Calculate the total score
+    # Calculate total + per-category scores
     total_score = calculate_total_score(responses)
-
-    # Calculate the total scores per category
     total_scores_per_category = calculate_total_scores_per_category(responses)
-
-    # Calculate the maximum possible scores per category
     max_scores_per_category = calculate_max_scores_per_category(categories)
 
     if st.button("Submit"):
         st.write("## Assessment Complete. Here are your results:")
 
-        st.write("### How to interpret the results")
-        st.write(
-            "The questions answered fall under the individual, company, and industry related actions and choices you make every day at work. "
-            "They address key areas from hiring through developing and retaining talent that we as company leaders make in relation to our peers, "
-            "team members, superiors, and creating a broader impact on the industry."
-        )
-        st.write(
-            "Take a look at the scores below and see:\n"
-            "- Where do you score highest?\n"
-            "- Which area has the highest potential to improve?\n"
-            "- Is there anything that surprised you?\n"
-            "- What are some of the actions that you can take to reduce bias and drive inclusion?\n"
-            "\n"
-            "Capture your reflection for a later conversation."
-        )
-        st.write("#### Development")
-        st.write("Spans actions in the area of developing talent/your team")
-        st.write("#### General")
-        st.write("Covers general work related attitudes and actions")
-        st.write("#### Recruiting & Hiring")
-        st.write("Highlights potential bias in recruiting and hiring talent")
-        st.write("#### Performance & Reward")
-        st.write("Looks at equity in relation to this area of rewarding the team")
-        st.write("#### Culture & Engagement")
-        st.write("Your actions and attitudes related to organisational culture")
-        st.write("#### Exit & Retention")
-        st.write("Actions related to retaining and understanding the reasons for talent drain")
-
-        # Display total scores per category
+        # Show per-category progress
         for category_name, score in total_scores_per_category.items():
             max_score = max_scores_per_category[category_name]
             st.write(f"**{category_name}: {score} out of {max_score}**")
-
-            # Calculate and display custom progress bar
             progress = int((score / max_score) * 100)
             custom_progress_bar(progress)
 
-        # Prepare data for visualization
+        # Build data for bar charts
         flattened_scores = []
         for category_name, types in categories.items():
             for type_name, questions in types.items():
                 response_scores = [
                     r['score'] for r in responses
-                    if r['category'] == category_name and r['type'] == type_name and type(r['score']) == int
+                    if r['category'] == category_name and r['type'] == type_name and isinstance(r['score'], int)
                 ]
                 score = sum(response_scores)
-                max_score = len(questions) * 5
-                percentage = (score / max_score) * 100
+                # Max is #questions * 4
+                max_score_type = len(questions) * 4
+                percentage = (score / max_score_type) * 100
                 flattened_scores.append({
                     "Category": category_name,
                     "Type": type_name,
@@ -394,7 +391,7 @@ def main():
                 })
 
         scores_data = pd.DataFrame(flattened_scores)
-        # Sort the scores_data based on the ordered categories
+        # Sort to keep categories in the order they appear
         ordered_categories = scores_data["Category"].unique()
         scores_data["Category"] = pd.Categorical(
             scores_data["Category"],
@@ -403,11 +400,17 @@ def main():
         )
         scores_data = scores_data.sort_values(by=["Category", "Type"], ascending=[True, False])
 
-        # Create a custom horizontal bar chart for scores (percentage)
+        # Create bar chart images
         chart_images = custom_bar_chart(scores_data)
 
-        # Generate and provide download link for PDF
-        pdf_buffer = generate_pdf(total_scores_per_category, max_scores_per_category, chart_images)
+        # Generate PDF (passing total_score for allyship scale)
+        pdf_buffer = generate_pdf(
+            total_scores_per_category, 
+            max_scores_per_category, 
+            chart_images,
+            total_score
+        )
+
         st.download_button(
             label="Download PDF of Results",
             data=pdf_buffer,
@@ -415,7 +418,7 @@ def main():
             mime="application/pdf"
         )
 
-    # Smaller credit text and visitor counter at the bottom
+    # Footer
     st.markdown(
         f"""
         <div style='text-align: center; margin-top: 50px; font-size: 12px;'>
