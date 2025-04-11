@@ -145,7 +145,7 @@ def calculate_max_scores_per_category(categories):
     max_scores_per_category = {}
     for category_name, types in categories.items():
         total_questions = sum(len(questions) for questions in types.values())
-        max_scores_per_category[category_name] = total_questions * 5  # Maximum score is 5 per question
+        max_scores_per_category[category_name] = total_questions * 4  # Maximum score is 4 per question
     return max_scores_per_category
 
 # Function to create custom progress bar
