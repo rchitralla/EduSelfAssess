@@ -87,10 +87,9 @@ for category_name, types in categories.items():
 def get_allyship_scale_text(total_score):
     """
     Returns paragraphs describing the user's position on the allyship scale
-    based on the overall total_score. Adjust text/cutoffs to your needs.
+    based on the overall total_score.
     """
     # Example cutoffs: <30, 30–90, 90–110, 110–120
-    # Adjust these if your total number of questions changes significantly.
     if total_score < 30:
         return [
             ("Below 30: Just Starting", "bold"),
@@ -126,7 +125,6 @@ def display_questions():
     Return a list of dictionaries capturing the user's score.
     """
     responses = []
-    # Rating scale: 1..4
     options = [1, 2, 3, 4]
     for item in st.session_state['shuffled_questions']:
         st.write(item["question"])
@@ -218,15 +216,29 @@ def custom_bar_chart(scores_data):
 
 def wrap_text(text, canvas, max_width, font_size):
     """
-    Splits a text string into multiple lines so it fits in 'max_width' on the PDF.
+    Safely splits a text string into multiple lines so it fits in 'max_width' on the PDF
+    (works even if one word is bigger than max_width).
     """
     lines = []
     words = text.split()
+
     while words:
         line = ''
+        # Build as many words as fit into this line
         while words and canvas.stringWidth(line + words[0] + ' ', "Helvetica", font_size) <= max_width:
             line += words.pop(0) + ' '
-        lines.append(line.strip())
+
+        if not line.strip():
+            # Means the next word is too long to fit in max_width.
+            # Instead of looping forever, just force that word to occupy
+            # its own line (even if it exceeds max_width).
+            # Pop it out, treat it as a line, and move on.
+            # If you wanted to truly split it in the middle, you’d have to do additional logic.
+            long_word = words.pop(0)
+            lines.append(long_word)
+        else:
+            lines.append(line.strip())
+
     return lines
 
 def generate_pdf(total_scores_per_category, max_scores_per_category, chart_images, total_score):
@@ -235,7 +247,6 @@ def generate_pdf(total_scores_per_category, max_scores_per_category, chart_image
       - Scores per category
       - Allyship scale text based on overall total_score
       - Custom bar charts
-    (Explanations removed as requested.)
     """
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -278,9 +289,7 @@ def generate_pdf(total_scores_per_category, max_scores_per_category, chart_image
 
     y -= 10
 
-    # --------------------------------------------------------------------------
-    # Insert Allyship Scale section (based on total_score)
-    # --------------------------------------------------------------------------
+    # Insert Allyship Scale section
     allyship_scale_text = get_allyship_scale_text(total_score)
     for (paragraph, style) in allyship_scale_text:
         if style == "bold":
@@ -331,6 +340,7 @@ def main():
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
     
+    # Attempt to show the logo in the Streamlit UI
     try:
         st.image(logo_path, width=200)
     except Exception as e:
@@ -377,10 +387,9 @@ def main():
             for type_name, questions in types.items():
                 response_scores = [
                     r['score'] for r in responses
-                    if r['category'] == category_name and r['type'] == type_name and isinstance(r['score'], int)
+                    if r['category'] == category_name and r['type'] == type_name
                 ]
                 score = sum(response_scores)
-                # Max is #questions * 4
                 max_score_type = len(questions) * 4
                 percentage = (score / max_score_type) * 100
                 flattened_scores.append({
@@ -403,7 +412,7 @@ def main():
         # Create bar chart images
         chart_images = custom_bar_chart(scores_data)
 
-        # Generate PDF (passing total_score for allyship scale)
+        # Generate PDF
         pdf_buffer = generate_pdf(
             total_scores_per_category, 
             max_scores_per_category, 
