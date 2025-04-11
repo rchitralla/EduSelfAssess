@@ -1,13 +1,10 @@
 import streamlit as st
 import pandas as pd
 import random
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from io import BytesIO
 import matplotlib.pyplot as plt
+from io import BytesIO
 
-# Path to the logo image
+# Path to the logo image (optional, remove if you want)
 logo_path = "Logo.png"
 
 ###############################################################################
@@ -81,43 +78,8 @@ for category_name, types in categories.items():
             })
 
 ###############################################################################
-# 2. Helper functions for allyship scale, PDF generation, and scoring
+# 2. Helper functions for scoring and displaying results
 ###############################################################################
-
-def get_allyship_scale_text(total_score):
-    """
-    Returns paragraphs describing the user's position on the allyship scale
-    based on the overall total_score.
-    """
-    # Example cutoffs: <30, 30–90, 90–110, 110–120
-    if total_score < 30:
-        return [
-            ("Below 30: Just Starting", "bold"),
-            ("It looks like you’re just getting started on this journey.", "normal"),
-            ("(Optionally add any supportive text here...)", "normal"),
-        ]
-    elif total_score <= 90:
-        return [
-            ("30–90: Consciously Relearning", "bold"),
-            ("You are on an important journey of self-education!", "normal"),
-            ("Unlearning, relearning and changing behaviour takes time – be patient and stay committed.", "normal"),
-            ("Listening and centring the experience of others will be key to elevating your allyship development.", "normal"),
-        ]
-    elif total_score <= 110:
-        return [
-            ("90–110: Adapting & Centering Others", "bold"),
-            ("You are on an important journey of self-education!", "normal"),
-            ("Unlearning, relearning and changing behaviour takes time – be patient and stay committed.", "normal"),
-            ("Listening and centring the experience of others will be key to elevating your allyship development.", "normal"),
-        ]
-    else:
-        # 110–120 or above
-        return [
-            ("110–120: Challenging & Sponsoring", "bold"),
-            ("As a consciously inclusive leader, you seek out and amplify under-represented perspectives during decision-making.", "normal"),
-            ("You call out unfair practices when you notice them.", "normal"),
-            ("Incentivising others and driving systemic change beyond your immediate function or business will be key to elevating your allyship further.", "normal"),
-        ]
 
 def display_questions():
     """
@@ -190,10 +152,8 @@ def custom_progress_bar(percentage, color="#377bff"):
 def custom_bar_chart(scores_data):
     """
     Displays a bar chart per category, showing the percentage for each sub-type.
-    Returns a list of chart images (in-memory) so we can embed them in the PDF.
     """
     st.markdown("<h3>Self Assessment Scores by Category and Type</h3>", unsafe_allow_html=True)
-    chart_images = []
     for category in scores_data["Category"].unique():
         st.markdown(f"### {category}", unsafe_allow_html=True)
         category_data = scores_data[scores_data["Category"] == category]
@@ -206,133 +166,11 @@ def custom_bar_chart(scores_data):
         ax.set_title(category, fontsize=14)
         ax.tick_params(axis='both', which='major', labelsize=10)
         plt.tight_layout()
-        
-        buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=300)
-        buf.seek(0)
-        chart_images.append(buf)
-        st.image(buf)
-    return chart_images
 
-def wrap_text(text, canvas, max_width, font_size):
-    """
-    Safely splits a text string into multiple lines so it fits in 'max_width' on the PDF
-    (works even if one word is bigger than max_width).
-    """
-    lines = []
-    words = text.split()
-
-    while words:
-        line = ''
-        # Build as many words as fit into this line
-        while words and canvas.stringWidth(line + words[0] + ' ', "Helvetica", font_size) <= max_width:
-            line += words.pop(0) + ' '
-
-        if not line.strip():
-            # Means the next word is too long to fit in max_width.
-            # Instead of looping forever, just force that word to occupy
-            # its own line (even if it exceeds max_width).
-            # Pop it out, treat it as a line, and move on.
-            # If you wanted to truly split it in the middle, you’d have to do additional logic.
-            long_word = words.pop(0)
-            lines.append(long_word)
-        else:
-            lines.append(line.strip())
-
-    return lines
-
-def generate_pdf(total_scores_per_category, max_scores_per_category, chart_images, total_score):
-    """
-    Builds a multi-page PDF with:
-      - Scores per category
-      - Allyship scale text based on overall total_score
-      - Custom bar charts
-    """
-    buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
-    margin = 40
-    y = height - margin
-
-    # Try adding a logo at the top
-    try:
-        logo = ImageReader(logo_path)
-        logo_width, logo_height = logo.getSize()
-        aspect_ratio = logo_height / logo_width
-        logo_display_width = 60
-        logo_display_height = logo_display_width * aspect_ratio
-        c.drawImage(logo, margin, y - logo_display_height, 
-                    width=logo_display_width, height=logo_display_height)
-        y -= (logo_display_height + 20)
-    except Exception as e:
-        st.error("Logo image not found or could not be loaded.")
-        st.write(e)
-
-    # PDF Title
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(margin, y, "LEAD Network Anti-Bias Self Assessment Tool")
-    y -= 20
-    c.setFont("Helvetica", 10)
-    c.drawString(margin, y, "Your results:")
-    y -= 15
-
-    # Display category scores
-    for category_name, score in total_scores_per_category.items():
-        max_score = max_scores_per_category[category_name]
-        progress = int((score / max_score) * 100) if max_score > 0 else 0
-        line = f"{category_name}: {score} out of {max_score} ({progress}%)"
-        if y - 15 < margin:
-            c.showPage()
-            y = height - margin
-        c.drawString(margin, y, line)
-        y -= 15
-
-    y -= 10
-
-    # Insert Allyship Scale section
-    allyship_scale_text = get_allyship_scale_text(total_score)
-    for (paragraph, style) in allyship_scale_text:
-        if style == "bold":
-            c.setFont("Helvetica-Bold", 10)
-        else:
-            c.setFont("Helvetica", 10)
-        lines = wrap_text(paragraph, c, width - 2*margin, 10)
-        for line in lines:
-            if y - 15 < margin:
-                c.showPage()
-                y = height - margin
-            c.drawString(margin, y, line)
-            y -= 12
-        y -= 5  # extra spacing
-
-    # Go to a new page for the charts
-    c.showPage()
-
-    charts_per_page = 2  
-    chart_index = 0
-    for page in range(3):
-        y = height - 50
-        for _ in range(charts_per_page):
-            if chart_index >= len(chart_images):
-                break
-            img = chart_images[chart_index]
-            if y - 320 < margin:
-                c.showPage()
-                y = height - 50
-            c.drawImage(ImageReader(img), margin, y - 300, 
-                        width=width - 2 * margin, height=300)
-            y -= 320
-            chart_index += 1
-        if chart_index >= len(chart_images):
-            break
-        c.showPage()
-
-    c.save()
-    buffer.seek(0)
-    return buffer
+        st.pyplot(fig)
 
 ###############################################################################
-# 3. Main Streamlit UI
+# 3. Main Streamlit UI (No PDF Generation)
 ###############################################################################
 
 def main():
@@ -340,22 +178,16 @@ def main():
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
     
-    # Attempt to show the logo in the Streamlit UI
+    # Attempt to show a logo in the Streamlit UI (optional)
     try:
         st.image(logo_path, width=200)
     except Exception as e:
         st.error("Logo image not found. Please check the path to the logo image.")
         st.write(e)
         
-    st.title("Anti-Bias Self Assessment Tool")
+    st.title("Anti-Bias Self Assessment Tool (No PDF Demo)")
     st.write(
-        "This tool enables you to explore your own behaviours related to bias & inclusion in the workplace. "
-        "Your results are yours and yours alone -- they will not be submitted or shared in any manner unless you choose to do so."
-    )
-    st.write(
-        "Read each statement and choose a score using the rating scale provided. "
-        "Once complete, the tool subtotals the scores by section. Reflect on areas where your scores are lower than others and "
-        "identify where you can continue to grow. The assessment should take you no longer than 5 – 10 mins."
+        "This version has no PDF generation. Use it just to test the question display and scoring."
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
@@ -409,29 +241,14 @@ def main():
         )
         scores_data = scores_data.sort_values(by=["Category", "Type"], ascending=[True, False])
 
-        # Create bar chart images
-        chart_images = custom_bar_chart(scores_data)
-
-        # Generate PDF
-        pdf_buffer = generate_pdf(
-            total_scores_per_category, 
-            max_scores_per_category, 
-            chart_images,
-            total_score
-        )
-
-        st.download_button(
-            label="Download PDF of Results",
-            data=pdf_buffer,
-            file_name="assessment_results.pdf",
-            mime="application/pdf"
-        )
+        # Create bar charts
+        custom_bar_chart(scores_data)
 
     # Footer
     st.markdown(
         f"""
         <div style='text-align: center; margin-top: 50px; font-size: 12px;'>
-            Created by Regina Chitralla
+            Created by Regina - Testing Without PDF
         </div>
         <div style='text-align: center; font-size: 12px;'>
             Unique Page Visits: {st.session_state.unique_visits}
