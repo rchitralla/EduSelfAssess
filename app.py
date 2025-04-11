@@ -185,7 +185,7 @@ def main():
         st.error("Logo image not found. Please check the path to the logo image.")
         st.write(e)
         
-    st.title("Anti-Bias Self Assessment Tool (No PDF Demo)")
+    st.title("LEAD Network - ALL IN Self Assessment")
     st.write(
         "This version has no PDF generation. Use it just to test the question display and scoring."
     )
