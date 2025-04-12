@@ -4,7 +4,10 @@ import random
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-# Path to the logo image (optional, remove if you want)
+# Path to your existing PDF
+EXISTING_PDF_PATH = "Actionable-Allyship-Self-Assessment.pdf"
+
+# Path to the logo image (optional, remove if not needed)
 logo_path = "Logo.png"
 
 ###############################################################################
@@ -170,7 +173,7 @@ def custom_bar_chart(scores_data):
         st.pyplot(fig)
 
 ###############################################################################
-# 3. Main Streamlit UI (No PDF Generation)
+# 3. Main Streamlit UI (Using an Existing PDF)
 ###############################################################################
 
 def main():
@@ -187,7 +190,7 @@ def main():
         
     st.title("Actionable Allyship Self-Assessment")
     st.write(
-        "This version has no PDF generation. Use it just to test the question display and scoring."
+        "This version shows how to let users download an existing PDF after submitting their answers."
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
@@ -244,11 +247,24 @@ def main():
         # Create bar charts
         custom_bar_chart(scores_data)
 
+        # -------------------------------------------
+        # Provide the existing PDF for download
+        # -------------------------------------------
+        with open(EXISTING_PDF_PATH, "rb") as pdf_file:
+            PDF_CONTENT = pdf_file.read()
+
+        st.download_button(
+            label="Download Your PDF Guide",
+            data=PDF_CONTENT,
+            file_name="allyship_guide.pdf",
+            mime="application/pdf"
+        )
+
     # Footer
     st.markdown(
         f"""
         <div style='text-align: center; margin-top: 50px; font-size: 12px;'>
-            Created by Regina - Testing Without PDF
+            Created by Regina - Using Existing PDF
         </div>
         <div style='text-align: center; font-size: 12px;'>
             Unique Page Visits: {st.session_state.unique_visits}
