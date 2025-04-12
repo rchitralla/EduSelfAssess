@@ -190,7 +190,7 @@ def main():
         
     st.title("Actionable Allyship Self-Assessment")
     st.write(
-        """This confidential assessment aligns with theAll InAction Framework. It is designed to reveal
+        """This confidential assessment aligns with the All In Action Framework. It is designed to reveal
          your current allyship strengths and opportunities for growth."""
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
