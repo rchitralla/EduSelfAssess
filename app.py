@@ -9,7 +9,7 @@ from io import BytesIO
 ###############################################################################
 st.set_page_config(
     page_title="Actionable Allyship Self-Assessment",
-    layout="wide"  # Make layout wide
+    layout="wide"  # Ensures layout is wide
 )
 
 # Path to your existing PDF
@@ -186,9 +186,9 @@ def main():
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
     
-    # Show the logo, scaled to container width
+    # Show the logo at a fixed width
     try:
-        st.image(logo_path, use_column_width=True)
+        st.image(logo_path, width=200)
     except Exception as e:
         st.error("Logo image not found. Please check the path to the logo image.")
         st.write(e)
@@ -200,6 +200,7 @@ def main():
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
+    # Shuffle questions if not already done
     if 'shuffled_questions' not in st.session_state:
         st.session_state['shuffled_questions'] = questions_list.copy()
         random.shuffle(st.session_state['shuffled_questions'])
