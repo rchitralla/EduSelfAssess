@@ -265,7 +265,7 @@ def main():
     st.markdown(
         f"""
         <div style='text-align: center; margin-top: 50px; font-size: 12px;'>
-            Created by Regina - Using Existing PDF
+            Created by Regina
         </div>
         <div style='text-align: center; font-size: 12px;'>
             Unique Page Visits: {st.session_state.unique_visits}
