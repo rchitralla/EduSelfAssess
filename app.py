@@ -8,7 +8,7 @@ from io import BytesIO
 EXISTING_PDF_PATH = "Actionable-Allyship-Self-Assessment.pdf"
 
 # Path to the logo image
-logo_path = "All-In-Full-Logo-Black-Colour.png"
+logo_path = ("All-In-Full-Logo-Black-Colour.png", use_column_width=True)
 
 ###############################################################################
 # 1. Define categories, questions, and rating scale
