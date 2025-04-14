@@ -261,7 +261,7 @@ def main():
             PDF_CONTENT = pdf_file.read()
 
         st.download_button(
-            label="Download Your PDF Guide",
+            label="Understand your results",
             data=PDF_CONTENT,
             file_name="allyship_guide.pdf",
             mime="application/pdf"
