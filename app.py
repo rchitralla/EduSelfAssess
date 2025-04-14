@@ -4,17 +4,23 @@ import random
 import matplotlib.pyplot as plt
 from io import BytesIO
 
+###############################################################################
+# 1. Page and Image Paths
+###############################################################################
+st.set_page_config(
+    page_title="Actionable Allyship Self-Assessment",
+    layout="wide"  # Make layout wide
+)
+
 # Path to your existing PDF
 EXISTING_PDF_PATH = "Actionable-Allyship-Self-Assessment.pdf"
 
 # Path to the logo image
-logo_path = ("All-In-Full-Logo-Black-Colour.png") 
-st.image(logo_path, use_column_width=True)
+logo_path = "All-In-Full-Logo-Black-Colour.png"
 
 ###############################################################################
-# 1. Define categories, questions, and rating scale
+# 2. Define Categories, Questions, and Rating Scale
 ###############################################################################
-
 categories = {
     "Equity & Inclusion Self-Assessment": {
         "Build your knowledge": [
@@ -82,9 +88,8 @@ for category_name, types in categories.items():
             })
 
 ###############################################################################
-# 2. Helper functions for scoring and displaying results
+# 3. Helper Functions for Scoring, Display, and Charting
 ###############################################################################
-
 def display_questions():
     """
     Display each question as a selectbox with the rating scale (1..4).
@@ -174,25 +179,24 @@ def custom_bar_chart(scores_data):
         st.pyplot(fig)
 
 ###############################################################################
-# 3. Main Streamlit UI (Using an Existing PDF)
+# 4. Main Streamlit UI
 ###############################################################################
-
 def main():
     if 'unique_visits' not in st.session_state:
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
     
-    # Attempt to show a logo in the Streamlit UI (optional)
+    # Show the logo, scaled to container width
     try:
-        st.image(logo_path, width=200)
+        st.image(logo_path, use_column_width=True)
     except Exception as e:
         st.error("Logo image not found. Please check the path to the logo image.")
         st.write(e)
         
     st.title("Actionable Allyship Self-Assessment")
     st.write(
-        """This confidential assessment aligns with the All In Action Framework. It is designed to reveal
-         your current allyship strengths and opportunities for growth."""
+        """This confidential assessment aligns with the All In Action Framework. It is designed 
+        to reveal your current allyship strengths and opportunities for growth."""
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
