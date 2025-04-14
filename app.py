@@ -7,8 +7,8 @@ from io import BytesIO
 # Path to your existing PDF
 EXISTING_PDF_PATH = "Actionable-Allyship-Self-Assessment.pdf"
 
-# Path to the logo image (optional, remove if not needed)
-logo_path = "Logo.png"
+# Path to the logo image
+logo_path = "All-In-Full-Logo-Black-Colour.png"
 
 ###############################################################################
 # 1. Define categories, questions, and rating scale
