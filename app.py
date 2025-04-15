@@ -74,7 +74,7 @@ all_sections = {
     ]
 }
 
-# "Page 1" sections
+# Page 1 sections
 page_1_sections = [
     "Build your knowledge",
     "Explore & grow",
@@ -83,7 +83,7 @@ page_1_sections = [
     "Create safe spaces for dialogue"
 ]
 
-# "Page 2" sections
+# Page 2 sections
 page_2_sections = [
     "Amplify voices",
     "Speak out",
@@ -98,7 +98,7 @@ page_2_sections = [
 def ensure_question_keys_exist():
     """
     For every question, initialize st.session_state with a default = 1
-    to ensure we never see a KeyError and each question defaults to "1".
+    so we never see a KeyError, and each question defaults to "1".
     """
     for section_name, questions in all_sections.items():
         for question_text in questions:
@@ -108,7 +108,7 @@ def ensure_question_keys_exist():
 
 def display_sections(section_list):
     """
-    Displays the given sections as headings + selectboxes (for that subset).
+    Displays the given sections (subsets of all_sections) as headings + selectboxes.
     The default is already set to 1 in session_state.
     Returns all user responses as a list of dicts.
     """
@@ -118,7 +118,8 @@ def display_sections(section_list):
         questions = all_sections[section_name]
         for question_text in questions:
             key = f"{main_category_name}_{section_name}_{question_text}"
-            current_val = st.session_state[key]  # We already set to 1 by default
+            # Because we set a default to 1, st.session_state[key] should be 1 unless changed
+            current_val = st.session_state[key]
             chosen_score = st.selectbox(
                 label=question_text,
                 options=[1, 2, 3, 4],
@@ -143,9 +144,7 @@ def calculate_total_scores_per_category(responses):
     return totals
 
 def calculate_max_scores_per_category():
-    """
-    For the single category we have, total questions * 4 = max points.
-    """
+    """For the single category, total questions * 4 = max points."""
     total_questions = sum(len(qlist) for qlist in all_sections.values())
     return {main_category_name: total_questions * 4}
 
@@ -186,7 +185,7 @@ def custom_bar_chart(scores_data):
 # 4. Main Streamlit UI
 ###############################################################################
 def main():
-    # Initialize question defaults = 1
+    # Initialize question defaults = 1 to avoid KeyErrors and unify default
     ensure_question_keys_exist()
 
     # Track which "page" the user is on
@@ -226,10 +225,10 @@ def main():
         st.markdown(f"## Page 2: {main_category_name}")
         display_sections(page_2_sections)
 
-        # Optionally add a "Back" button to revisit Page 1
-        # if st.button("← Back"):
-        #     st.session_state["page"] = 1
-        #     st.experimental_rerun()
+        # "Back" button to revisit Page 1
+        if st.button("← Back"):
+            st.session_state["page"] = 1
+            st.experimental_rerun()  # Re-run the script so it shows Page 1 immediately
 
         if st.button("Submit"):
             # Gather all responses from session_state
