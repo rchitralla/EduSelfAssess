@@ -19,7 +19,6 @@ logo_path = "All-In-Full-Logo-Black-Colour.png"
 ###############################################################################
 # 2. Define Categories, Questions, and Split into Two Sets
 ###############################################################################
-# We assume you have only one main category, with 10 sub-sections total.
 main_category_name = "Equity & Inclusion Self-Assessment"
 
 all_sections = {
@@ -75,7 +74,7 @@ all_sections = {
     ]
 }
 
-# Which sections go on page 1 vs. page 2
+# "Page 1" sections
 page_1_sections = [
     "Build your knowledge",
     "Explore & grow",
@@ -83,6 +82,8 @@ page_1_sections = [
     "Centre the experiences of others",
     "Create safe spaces for dialogue"
 ]
+
+# "Page 2" sections
 page_2_sections = [
     "Amplify voices",
     "Speak out",
@@ -94,9 +95,21 @@ page_2_sections = [
 ###############################################################################
 # 3. Helper Functions
 ###############################################################################
+def ensure_question_keys_exist():
+    """
+    Ensure that for every question in all_sections, a default session_state key 
+    exists (so we never get a KeyError). 
+    You can choose None or 1 as the default if missing.
+    """
+    for section_name, question_list in all_sections.items():
+        for question_text in question_list:
+            key = f"{main_category_name}_{section_name}_{question_text}"
+            if key not in st.session_state:
+                st.session_state[key] = None  # or 1 if you prefer a numeric default
+
 def display_sections(section_list):
     """
-    Displays the given sections (list of section names) as headings + selectboxes.
+    Displays the given sections as headings + selectboxes (for that subset).
     Returns all user responses for these sections as a list of dicts.
     """
     responses = []
@@ -104,37 +117,39 @@ def display_sections(section_list):
         st.markdown(f"### {section_name}")
         questions = all_sections[section_name]
         for question_text in questions:
-            unique_key = f"{main_category_name}_{section_name}_{question_text}"
-            if unique_key not in st.session_state:
-                # Default to 1
-                st.session_state[unique_key] = 1
+            key = f"{main_category_name}_{section_name}_{question_text}"
 
-            score = st.selectbox(
+            # If the key is missing or None, default index to 0 (i.e. "1" on the selectbox).
+            current_val = st.session_state[key]
+            if current_val not in [1, 2, 3, 4]:
+                current_val = 1
+
+            chosen_score = st.selectbox(
                 label=question_text,
                 options=[1, 2, 3, 4],
-                index=[1, 2, 3, 4].index(st.session_state[unique_key]),
-                key=unique_key
+                index=[1, 2, 3, 4].index(current_val),
+                key=key
             )
             responses.append({
                 "category": main_category_name,
                 "type": section_name,
                 "question": question_text,
-                "score": score
+                "score": chosen_score
             })
     return responses
 
 def count_answered_questions():
     """
-    Counts how many questions in the entire assessment have a stored score in session_state.
+    Counts how many questions in the entire assessment have a numeric answer in session_state.
     """
-    count = 0
-    for section_name, questions in all_sections.items():
-        for question_text in questions:
+    answered = 0
+    for section_name, question_list in all_sections.items():
+        for question_text in question_list:
             key = f"{main_category_name}_{section_name}_{question_text}"
-            # If it's in session_state with a numeric value, consider it answered
-            if key in st.session_state and st.session_state[key] is not None:
-                count += 1
-    return count
+            val = st.session_state.get(key, None)
+            if val in [1, 2, 3, 4]:
+                answered += 1
+    return answered
 
 def total_number_of_questions():
     return sum(len(questions) for questions in all_sections.values())
@@ -145,9 +160,8 @@ def show_progress_bar():
     """
     answered = count_answered_questions()
     total_q = total_number_of_questions()
-    pct = int(answered / total_q * 100)
+    pct = int((answered / total_q) * 100)
 
-    # Custom progress bar using HTML
     st.markdown(
         f"""
         <div style="width: 100%; background-color: #e0e0e0; border-radius: 5px; margin-top: 15px;">
@@ -158,9 +172,6 @@ def show_progress_bar():
         """,
         unsafe_allow_html=True
     )
-
-def calculate_total_score(responses):
-    return sum(r['score'] for r in responses if r['score'] is not None)
 
 def calculate_total_scores_per_category(responses):
     total_scores_per_category = {}
@@ -173,10 +184,9 @@ def calculate_total_scores_per_category(responses):
 
 def calculate_max_scores_per_category():
     """
-    Calculates the max possible score (4 per question) for the single category we have.
+    For the single category we have, total questions * 4 = max points.
     """
     all_q = total_number_of_questions()
-    # 4 points per question
     return {main_category_name: all_q * 4}
 
 def custom_progress_bar(percentage, color="#377bff"):
@@ -216,16 +226,19 @@ def custom_bar_chart(scores_data):
 # 4. Main Streamlit UI
 ###############################################################################
 def main():
-    # Track the current "page" in session_state
+    # First, ensure all question keys exist in session_state
+    ensure_question_keys_exist()
+
+    # Track which "page" we're on
     if "page" not in st.session_state:
         st.session_state["page"] = 1
 
-    # Also track how many times the page was visited
-    if 'unique_visits' not in st.session_state:
-        st.session_state.unique_visits = 0
-    st.session_state.unique_visits += 1
+    # Track visits
+    if "unique_visits" not in st.session_state:
+        st.session_state["unique_visits"] = 0
+    st.session_state["unique_visits"] += 1
 
-    # Show the logo at a fixed width
+    # Show the logo
     try:
         st.image(logo_path, width=200)
     except Exception as e:
@@ -234,55 +247,47 @@ def main():
 
     st.title("Actionable Allyship Self-Assessment")
     st.write(
-        """This confidential assessment aligns with the All In Action Framework. It is designed 
-        to reveal your current allyship strengths and opportunities for growth."""
+        """This confidential assessment aligns with the All In Action Framework. 
+        It is designed to reveal your current allyship strengths and opportunities for growth."""
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
+    # PAGE 1
     if st.session_state["page"] == 1:
-        # -----------------------
-        # PAGE 1 Layout
-        # -----------------------
         st.markdown(f"## Page 1: {main_category_name}")
-        # Display the first half of the sections
-        page1_responses = display_sections(page_1_sections)
+        # Show the first set of sections
+        display_sections(page_1_sections)
 
-        # Show the "Next" button at the bottom of page 1
+        # "Next" button -> go to page 2
         if st.button("Next →"):
             st.session_state["page"] = 2
 
-        # Show a progress bar of how many total questions are answered
+        # Show progress bar (how many questions so far)
         show_progress_bar()
 
+    # PAGE 2
     elif st.session_state["page"] == 2:
-        # -----------------------
-        # PAGE 2 Layout
-        # -----------------------
         st.markdown(f"## Page 2: {main_category_name}")
-        # Display the second half of the sections
-        page2_responses = display_sections(page_2_sections)
+        # Show the second set of sections
+        display_sections(page_2_sections)
 
-        # "Back" button if you want the user to go back and edit Page 1
-        # This is optional. Uncomment if you want a back button:
+        # Optional "Back" button if you want to revisit Page 1
         # if st.button("← Back"):
         #     st.session_state["page"] = 1
         #     st.experimental_rerun()
 
-        # Or "Submit" to finalize
         if st.button("Submit"):
-            # Combine all responses for scoring
-            # We don't do anything with page1_responses vs page2_responses in session 
-            # because the user might have changed page1_responses after we created them.
-            # So let's just re-scan them directly in session_state.
+            # Gather all responses from session_state
             all_responses = []
-            for section, questions in all_sections.items():
-                for q in questions:
-                    key = f"{main_category_name}_{section}_{q}"
+            for section_name, questions in all_sections.items():
+                for question_text in questions:
+                    key = f"{main_category_name}_{section_name}_{question_text}"
+                    score_val = st.session_state.get(key, 1)  # fallback if missing
                     all_responses.append({
                         "category": main_category_name,
-                        "type": section,
-                        "question": q,
-                        "score": st.session_state[key]
+                        "type": section_name,
+                        "question": question_text,
+                        "score": score_val
                     })
 
             st.write("## Assessment Complete. Here are your results:")
@@ -299,16 +304,16 @@ def main():
 
             # Build data for bar charts by sub-sections
             flattened_scores = []
-            for section, questions in all_sections.items():
+            for section_name, question_list in all_sections.items():
                 sub_scores = sum(
                     r["score"] for r in all_responses 
-                    if r["type"] == section
+                    if r["type"] == section_name
                 )
-                sub_max = len(questions) * 4
+                sub_max = len(question_list) * 4
                 sub_pct = (sub_scores / sub_max) * 100
                 flattened_scores.append({
                     "Category": main_category_name,
-                    "Type": section,
+                    "Type": section_name,
                     "Score": sub_scores,
                     "Percentage": sub_pct
                 })
@@ -329,7 +334,7 @@ def main():
             except FileNotFoundError:
                 st.error("PDF file not found. Check your path or filename.")
 
-        # Show a progress bar of how many total questions are answered
+        # Show progress bar
         show_progress_bar()
 
     # Footer
@@ -339,11 +344,12 @@ def main():
             Created by Regina
         </div>
         <div style='text-align: center; font-size: 12px;'>
-            Unique Page Visits: {st.session_state.unique_visits}
+            Unique Page Visits: {st.session_state["unique_visits"]}
         </div>
         """,
         unsafe_allow_html=True
     )
+
 
 if __name__ == "__main__":
     main()
