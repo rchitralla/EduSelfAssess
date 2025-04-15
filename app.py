@@ -21,53 +21,75 @@ logo_path = "All-In-Full-Logo-Black-Colour.png"
 ###############################################################################
 # 2. Define Categories, Questions, and Rating Scale
 ###############################################################################
+# In the image, the sections go in this order (Left column, then Right column):
+# 1) Build your knowledge
+# 2) Explore & grow
+# 3) Practise self-compassion
+# 4) Centre the experiences of others
+# 5) Create safe spaces for dialogue
+# 6) Amplify voices
+# 7) Speak out
+# 8) Make equitable & inclusive decisions
+# 9) Drive accountability
+# 10) Create sustainable change
+
 categories = {
     "Equity & Inclusion Self-Assessment": {
+        # 2.1 Build your knowledge
         "Build your knowledge": [
             "I learn about people who are different to me.",
             "I invest time in learning about equity & inclusion.",
             "I leverage insights from Employee Resource Groups (or equivalent) to impact business outcomes."
         ],
-        "Amplify voices": [
-            "When developing ideas or making decisions, I ask 'Whose perspective are we missing?'",
-            "I advocate for individuals from marginalised groups when they’re not in the room.",
-            "I give credit to individuals whose voices are often overlooked or unheard."
-        ],
+        # 2.2 Explore & grow
         "Explore & grow": [
             "I am aware of and challenge my own biases and assumptions.",
             "I seek feedback about the impact of my actions & behaviours on others.",
             "I take feedback seriously and course correct."
         ],
-        "Speak out": [
-            "I say something when I hear people make comments that are rooted in stereotype or assumption.",
-            "If I notice someone is being talked over or dismissed, I draw attention to it.",
-            "I challenge inequities and unfair practices when I witness them."
-        ],
+        # 2.3 Practise self-compassion
         "Practise self-compassion": [
             "I accept that I will make mistakes.",
             "I see my mistakes as opportunities to listen, learn, and improve, without dwelling on them.",
             "If I unintentionally make a mistake, I apologise, correct myself and move on."
         ],
-        "Make equitable & inclusive decisions": [
-            "I ensure diverse perspectives are included when developing products and services.",
-            "I prioritise equity when making hiring, promotion and other critical people decisions.",
-            "I evaluate and measure the outcomes of my decisions across different populations."
-        ],
+        # 2.4 Centre the experiences of others
         "Centre the experiences of others": [
             "I actively listen to the experiences of others without being judgmental or defensive.",
             "I believe others’ experiences and challenge my own assumptions.",
             "In discussions, I intentionally hold back from sharing my view, until others have shared their own perspectives."
         ],
-        "Drive accountability": [
-            "I establish equity & inclusion goals that tie to business performance.",
-            "I hold all team members accountable for creating an inclusive environment.",
-            "I reward equitable & inclusive behaviours."
-        ],
+        # 2.5 Create safe spaces for dialogue
         "Create safe spaces for dialogue": [
             "At the beginning of group discussions, I remind participants to give each other their full attention.",
             "I share my experiences with equity and inclusion to build trust and connection with others.",
             "I invite people to raise concerns, even if it feels uncomfortable."
         ],
+        # 2.6 Amplify voices
+        "Amplify voices": [
+            "When developing ideas or making decisions, I ask 'Whose perspective are we missing?'",
+            "I advocate for individuals from marginalised groups when they’re not in the room.",
+            "I give credit to individuals whose voices are often overlooked or unheard."
+        ],
+        # 2.7 Speak out
+        "Speak out": [
+            "I say something when I hear people make comments that are rooted in stereotype or assumption.",
+            "If I notice someone is being talked over or dismissed, I draw attention to it.",
+            "I challenge inequities and unfair practices when I witness them."
+        ],
+        # 2.8 Make equitable & inclusive decisions
+        "Make equitable & inclusive decisions": [
+            "I ensure diverse perspectives are included when developing products and services.",
+            "I prioritise equity when making hiring, promotion and other critical people decisions.",
+            "I evaluate and measure the outcomes of my decisions across different populations."
+        ],
+        # 2.9 Drive accountability
+        "Drive accountability": [
+            "I establish equity & inclusion goals that tie to business performance.",
+            "I hold all team members accountable for creating an inclusive environment.",
+            "I reward equitable & inclusive behaviours."
+        ],
+        # 2.10 Create sustainable change
         "Create sustainable change": [
             "I use a data-driven approach to develop and evaluate policies.",
             "I elevate equity & inclusion when developing and executing strategic plans.",
