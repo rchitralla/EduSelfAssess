@@ -97,19 +97,19 @@ page_2_sections = [
 ###############################################################################
 def ensure_question_keys_exist():
     """
-    Ensure that for every question in all_sections, a default session_state key 
-    exists (so we never get a KeyError). Use None as the default to indicate 
-    the question hasn't been answered yet.
+    For every question, initialize st.session_state with a default = 1
+    to ensure we never see a KeyError and each question defaults to "1".
     """
-    for section_name, question_list in all_sections.items():
-        for question_text in question_list:
+    for section_name, questions in all_sections.items():
+        for question_text in questions:
             key = f"{main_category_name}_{section_name}_{question_text}"
             if key not in st.session_state:
-                st.session_state[key] = None
+                st.session_state[key] = 1
 
 def display_sections(section_list):
     """
-    Displays the given sections (subsets of all_sections) as headings + selectboxes.
+    Displays the given sections as headings + selectboxes (for that subset).
+    The default is already set to 1 in session_state.
     Returns all user responses as a list of dicts.
     """
     responses = []
@@ -118,16 +118,11 @@ def display_sections(section_list):
         questions = all_sections[section_name]
         for question_text in questions:
             key = f"{main_category_name}_{section_name}_{question_text}"
-
-            # If the user never set an answer (None), default to 1
-            current_val = st.session_state[key]
-            if current_val not in [1, 2, 3, 4]:
-                current_val = 1
-
+            current_val = st.session_state[key]  # We already set to 1 by default
             chosen_score = st.selectbox(
                 label=question_text,
                 options=[1, 2, 3, 4],
-                index=[1,2,3,4].index(current_val),
+                index=[1, 2, 3, 4].index(current_val),
                 key=key
             )
             responses.append({
@@ -139,19 +134,19 @@ def display_sections(section_list):
     return responses
 
 def calculate_total_scores_per_category(responses):
-    total_scores_per_category = {}
+    totals = {}
     for r in responses:
         cat = r["category"]
-        if cat not in total_scores_per_category:
-            total_scores_per_category[cat] = 0
-        total_scores_per_category[cat] += r["score"]
-    return total_scores_per_category
+        if cat not in totals:
+            totals[cat] = 0
+        totals[cat] += r["score"]
+    return totals
 
 def calculate_max_scores_per_category():
     """
     For the single category we have, total questions * 4 = max points.
     """
-    total_questions = sum(len(q) for q in all_sections.values())
+    total_questions = sum(len(qlist) for qlist in all_sections.values())
     return {main_category_name: total_questions * 4}
 
 def custom_progress_bar(percentage, color="#377bff"):
@@ -191,7 +186,7 @@ def custom_bar_chart(scores_data):
 # 4. Main Streamlit UI
 ###############################################################################
 def main():
-    # Initialize all question keys to avoid KeyError
+    # Initialize question defaults = 1
     ensure_question_keys_exist()
 
     # Track which "page" the user is on
