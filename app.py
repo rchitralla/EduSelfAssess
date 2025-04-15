@@ -8,7 +8,7 @@ from io import BytesIO
 ###############################################################################
 st.set_page_config(
     page_title="Actionable Allyship Self-Assessment",
-    layout="wide"  # Ensures layout is wide
+    layout="wide"  # Ensures layout is wide (helpful for columns).
 )
 
 # Path to your existing PDF
@@ -18,12 +18,10 @@ EXISTING_PDF_PATH = "Actionable-Allyship-Self-Assessment.pdf"
 logo_path = "All-In-Full-Logo-Black-Colour.png"
 
 ###############################################################################
-# 2. Define Categories, Questions, and Rating Scale
+# 2. Define Categories, Questions, and Separate Lists for Left/Right Sections
 ###############################################################################
-# Ordered exactly as in your image:
 categories = {
     "Equity & Inclusion Self-Assessment": {
-        # Left Column
         "Build your knowledge": [
             "I learn about people who are different to me.",
             "I invest time in learning about equity & inclusion.",
@@ -49,7 +47,6 @@ categories = {
             "I share my experiences with equity and inclusion to build trust and connection with others.",
             "I invite people to raise concerns, even if it feels uncomfortable."
         ],
-        # Right Column
         "Amplify voices": [
             "When developing ideas or making decisions, I ask 'Whose perspective are we missing?'",
             "I advocate for individuals from marginalised groups when they’re not in the room.",
@@ -78,42 +75,60 @@ categories = {
     }
 }
 
+# We just have one top-level category, but let's note it for clarity:
+main_category_name = "Equity & Inclusion Self-Assessment"
+
+# Define which sub-sections go in the LEFT vs. RIGHT columns
+left_sections = [
+    "Build your knowledge",
+    "Explore & grow",
+    "Practise self-compassion",
+    "Centre the experiences of others",
+    "Create safe spaces for dialogue"
+]
+
+right_sections = [
+    "Amplify voices",
+    "Speak out",
+    "Make equitable & inclusive decisions",
+    "Drive accountability",
+    "Create sustainable change"
+]
+
 ###############################################################################
 # 3. Helper Functions
 ###############################################################################
-def display_questions_ordered(categories_dict):
+def display_subsections_in_column(col, category_dict, category_name, subsection_list):
     """
-    Displays questions in the exact order of the categories and types.
-    Shows the category name as an H2, the type name as H3, then each question.
-    Returns a list of user responses.
+    Displays each subsection (and its questions) in the given column 'col'.
+    Returns a list of response dicts (category, type, question, score).
     """
     responses = []
-    # We have only one top-level key here, but let's code it more generally
-    for category_name, sub_sections in categories_dict.items():
-        # Big heading for the main category
-        st.markdown(f"## {category_name}")
-        
-        # Now show each 'type' (sub-section) as H3
-        for section_title, questions in sub_sections.items():
-            st.markdown(f"### {section_title}")
+    with col:
+        # Show the category name once at the top if you want. 
+        # If you prefer a smaller heading, use st.markdown("### ...")
+        for subsection_title in subsection_list:
+            st.markdown(f"### {subsection_title}")
+            questions = category_dict[category_name][subsection_title]
             for question in questions:
-                key = f"{category_name}_{section_title}_{question}"
-                if key not in st.session_state:
-                    st.session_state[key] = 1
-                
-                selected_option = st.selectbox(
+                unique_key = f"{category_name}_{subsection_title}_{question}"
+                if unique_key not in st.session_state:
+                    st.session_state[unique_key] = 1
+
+                score = st.selectbox(
                     label=question,
                     options=[1, 2, 3, 4],
-                    index=[1, 2, 3, 4].index(st.session_state[key]),
-                    key=key
+                    index=[1, 2, 3, 4].index(st.session_state[unique_key]),
+                    key=unique_key
                 )
                 responses.append({
                     "category": category_name,
-                    "type": section_title,
+                    "type": subsection_title,
                     "question": question,
-                    "score": selected_option
+                    "score": score
                 })
     return responses
+
 
 def calculate_total_score(responses):
     return sum(r['score'] for r in responses if r['score'] is not None)
@@ -134,9 +149,9 @@ def calculate_max_scores_per_category(categories_dict):
     Calculates the max possible score (4 per question) for each category.
     """
     max_scores_per_category = {}
-    for category_name, sub_sections in categories_dict.items():
-        total_questions = sum(len(q_list) for q_list in sub_sections.values())
-        max_scores_per_category[category_name] = total_questions * 4
+    for cat_name, sub_sections in categories_dict.items():
+        total_questions = sum(len(qlist) for qlist in sub_sections.values())
+        max_scores_per_category[cat_name] = total_questions * 4
     return max_scores_per_category
 
 def custom_progress_bar(percentage, color="#377bff"):
@@ -158,13 +173,11 @@ def custom_bar_chart(scores_data):
     """
     Displays a bar chart per category, showing the percentage for each sub-type.
     """
-    import matplotlib.pyplot as plt
-
     st.markdown("<h3>Self Assessment Scores by Category and Type</h3>", unsafe_allow_html=True)
-    for category in scores_data["Category"].unique():
+    unique_categories = scores_data["Category"].unique()
+    for category in unique_categories:
         st.markdown(f"### {category}", unsafe_allow_html=True)
         category_data = scores_data[scores_data["Category"] == category]
-        # sort by type descending (or ascending if preferred)
         category_data = category_data.sort_values(by=["Type"], ascending=False)
 
         fig, ax = plt.subplots(figsize=(10, 4))
@@ -180,7 +193,7 @@ def custom_bar_chart(scores_data):
 # 4. Main Streamlit UI
 ###############################################################################
 def main():
-    # Count visits
+    # Track unique page visits
     if 'unique_visits' not in st.session_state:
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
@@ -199,18 +212,37 @@ def main():
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
-    # Display questions in a fixed order, with headers
-    responses = display_questions_ordered(categories)
+    # Create two columns for the sub-sections
+    col_left, col_right = st.columns(2)
+    
+    # Display left sections in the first column
+    left_responses = display_subsections_in_column(
+        col=col_left,
+        category_dict=categories,
+        category_name=main_category_name,
+        subsection_list=left_sections
+    )
+    
+    # Display right sections in the second column
+    right_responses = display_subsections_in_column(
+        col=col_right,
+        category_dict=categories,
+        category_name=main_category_name,
+        subsection_list=right_sections
+    )
 
-    # Once user clicks Submit
+    # Combine all responses
+    all_responses = left_responses + right_responses
+
     if st.button("Submit"):
         st.write("## Assessment Complete. Here are your results:")
 
         # Calculate total + per-category scores
-        total_score = calculate_total_score(responses)
-        total_scores_per_category = calculate_total_scores_per_category(responses)
+        total_score = calculate_total_score(all_responses)
+        total_scores_per_category = calculate_total_scores_per_category(all_responses)
         max_scores_per_category = calculate_max_scores_per_category(categories)
 
+        # Show progress bars for each category
         for cat_name, score_value in total_scores_per_category.items():
             max_score = max_scores_per_category[cat_name]
             st.write(f"**{cat_name}: {score_value} out of {max_score}**")
@@ -220,32 +252,32 @@ def main():
         # Prepare data for bar chart
         flattened_scores = []
         for cat_name, sub_sections in categories.items():
-            for section_title, question_list in sub_sections.items():
+            for subsection_title, qlist in sub_sections.items():
                 # sum up the user scores in that sub-section
-                sub_scores = [
+                matched_scores = [
                     r['score'] 
-                    for r in responses 
-                    if r['category'] == cat_name and r['type'] == section_title
+                    for r in all_responses 
+                    if r['category'] == cat_name and r['type'] == subsection_title
                 ]
-                sub_total_score = sum(sub_scores)
-                sub_max_score = len(question_list) * 4
+                sub_total_score = sum(matched_scores)
+                sub_max_score = len(qlist) * 4
                 sub_percentage = (sub_total_score / sub_max_score) * 100
                 flattened_scores.append({
                     "Category": cat_name,
-                    "Type": section_title,
+                    "Type": subsection_title,
                     "Score": sub_total_score,
                     "Percentage": sub_percentage
                 })
 
         scores_data = pd.DataFrame(flattened_scores)
-        # This ensures the order of categories is the same as definition
+        # Keep the order of categories as in the dictionary
         ordered_categories = list(scores_data["Category"].unique())
         scores_data["Category"] = pd.Categorical(
             scores_data["Category"], 
             categories=ordered_categories, 
             ordered=True
         )
-        # Sort by (Category, Type) if you like
+        # Sort to keep sub-sections in a readable order (optional).
         scores_data = scores_data.sort_values(by=["Category", "Type"], ascending=[True, True])
 
         # Show the bar charts
