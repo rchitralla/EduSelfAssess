@@ -219,6 +219,7 @@ def main():
         # Button -> go to Page 2
         if st.button("Next →"):
             st.session_state["page"] = 2
+            st.experimental_rerun()
 
     # PAGE 2
     elif st.session_state["page"] == 2:
