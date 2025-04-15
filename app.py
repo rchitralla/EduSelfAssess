@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import random
 import matplotlib.pyplot as plt
 from io import BytesIO
 
@@ -21,75 +20,56 @@ logo_path = "All-In-Full-Logo-Black-Colour.png"
 ###############################################################################
 # 2. Define Categories, Questions, and Rating Scale
 ###############################################################################
-# In the image, the sections go in this order (Left column, then Right column):
-# 1) Build your knowledge
-# 2) Explore & grow
-# 3) Practise self-compassion
-# 4) Centre the experiences of others
-# 5) Create safe spaces for dialogue
-# 6) Amplify voices
-# 7) Speak out
-# 8) Make equitable & inclusive decisions
-# 9) Drive accountability
-# 10) Create sustainable change
-
+# Ordered exactly as in your image:
 categories = {
     "Equity & Inclusion Self-Assessment": {
-        # 2.1 Build your knowledge
+        # Left Column
         "Build your knowledge": [
             "I learn about people who are different to me.",
             "I invest time in learning about equity & inclusion.",
             "I leverage insights from Employee Resource Groups (or equivalent) to impact business outcomes."
         ],
-        # 2.2 Explore & grow
         "Explore & grow": [
             "I am aware of and challenge my own biases and assumptions.",
             "I seek feedback about the impact of my actions & behaviours on others.",
             "I take feedback seriously and course correct."
         ],
-        # 2.3 Practise self-compassion
         "Practise self-compassion": [
             "I accept that I will make mistakes.",
             "I see my mistakes as opportunities to listen, learn, and improve, without dwelling on them.",
             "If I unintentionally make a mistake, I apologise, correct myself and move on."
         ],
-        # 2.4 Centre the experiences of others
         "Centre the experiences of others": [
             "I actively listen to the experiences of others without being judgmental or defensive.",
             "I believe others’ experiences and challenge my own assumptions.",
             "In discussions, I intentionally hold back from sharing my view, until others have shared their own perspectives."
         ],
-        # 2.5 Create safe spaces for dialogue
         "Create safe spaces for dialogue": [
             "At the beginning of group discussions, I remind participants to give each other their full attention.",
             "I share my experiences with equity and inclusion to build trust and connection with others.",
             "I invite people to raise concerns, even if it feels uncomfortable."
         ],
-        # 2.6 Amplify voices
+        # Right Column
         "Amplify voices": [
             "When developing ideas or making decisions, I ask 'Whose perspective are we missing?'",
             "I advocate for individuals from marginalised groups when they’re not in the room.",
             "I give credit to individuals whose voices are often overlooked or unheard."
         ],
-        # 2.7 Speak out
         "Speak out": [
             "I say something when I hear people make comments that are rooted in stereotype or assumption.",
             "If I notice someone is being talked over or dismissed, I draw attention to it.",
             "I challenge inequities and unfair practices when I witness them."
         ],
-        # 2.8 Make equitable & inclusive decisions
         "Make equitable & inclusive decisions": [
             "I ensure diverse perspectives are included when developing products and services.",
             "I prioritise equity when making hiring, promotion and other critical people decisions.",
             "I evaluate and measure the outcomes of my decisions across different populations."
         ],
-        # 2.9 Drive accountability
         "Drive accountability": [
             "I establish equity & inclusion goals that tie to business performance.",
             "I hold all team members accountable for creating an inclusive environment.",
             "I reward equitable & inclusive behaviours."
         ],
-        # 2.10 Create sustainable change
         "Create sustainable change": [
             "I use a data-driven approach to develop and evaluate policies.",
             "I elevate equity & inclusion when developing and executing strategic plans.",
@@ -98,71 +78,65 @@ categories = {
     }
 }
 
-# Flattened list of questions
-questions_list = []
-for category_name, types in categories.items():
-    for type_name, questions in types.items():
-        for question in questions:
-            questions_list.append({
-                "category": category_name,
-                "type": type_name,
-                "question": question
-            })
-
 ###############################################################################
-# 3. Helper Functions for Scoring, Display, and Charting
+# 3. Helper Functions
 ###############################################################################
-def display_questions():
+def display_questions_ordered(categories_dict):
     """
-    Display each question as a selectbox with the rating scale (1..4).
-    Return a list of dictionaries capturing the user's score.
+    Displays questions in the exact order of the categories and types.
+    Shows the category name as an H2, the type name as H3, then each question.
+    Returns a list of user responses.
     """
     responses = []
-    options = [1, 2, 3, 4]
-    for item in st.session_state['shuffled_questions']:
-        st.write(item["question"])
-        key = f"{item['category']}_{item['type']}_{item['question']}"
-        if key not in st.session_state:
-            st.session_state[key] = 1
-
-        selected_option = st.selectbox(
-            "Select your response:",
-            options,
-            index=options.index(st.session_state[key]) if st.session_state[key] in options else 0,
-            key=key
-        )
-
-        responses.append({
-            "category": item["category"],
-            "type": item["type"],
-            "question": item["question"],
-            "score": selected_option
-        })
+    # We have only one top-level key here, but let's code it more generally
+    for category_name, sub_sections in categories_dict.items():
+        # Big heading for the main category
+        st.markdown(f"## {category_name}")
+        
+        # Now show each 'type' (sub-section) as H3
+        for section_title, questions in sub_sections.items():
+            st.markdown(f"### {section_title}")
+            for question in questions:
+                key = f"{category_name}_{section_title}_{question}"
+                if key not in st.session_state:
+                    st.session_state[key] = 1
+                
+                selected_option = st.selectbox(
+                    label=question,
+                    options=[1, 2, 3, 4],
+                    index=[1, 2, 3, 4].index(st.session_state[key]),
+                    key=key
+                )
+                responses.append({
+                    "category": category_name,
+                    "type": section_title,
+                    "question": question,
+                    "score": selected_option
+                })
     return responses
 
 def calculate_total_score(responses):
-    return sum(response['score'] for response in responses if response['score'] is not None)
+    return sum(r['score'] for r in responses if r['score'] is not None)
 
 def calculate_total_scores_per_category(responses):
     total_scores_per_category = {}
-    for response in responses:
-        if response["score"] is None:
+    for r in responses:
+        if r["score"] is None:
             continue
-        category = response["category"]
-        score = response["score"]
-        if category not in total_scores_per_category:
-            total_scores_per_category[category] = 0
-        total_scores_per_category[category] += score
+        cat = r["category"]
+        if cat not in total_scores_per_category:
+            total_scores_per_category[cat] = 0
+        total_scores_per_category[cat] += r["score"]
     return total_scores_per_category
 
-def calculate_max_scores_per_category(categories):
+def calculate_max_scores_per_category(categories_dict):
     """
     Calculates the max possible score (4 per question) for each category.
     """
     max_scores_per_category = {}
-    for category_name, types in categories.items():
-        total_questions = sum(len(questions) for questions in types.values())
-        max_scores_per_category[category_name] = total_questions * 4  # 4 is the max rating
+    for category_name, sub_sections in categories_dict.items():
+        total_questions = sum(len(q_list) for q_list in sub_sections.values())
+        max_scores_per_category[category_name] = total_questions * 4
     return max_scores_per_category
 
 def custom_progress_bar(percentage, color="#377bff"):
@@ -184,11 +158,14 @@ def custom_bar_chart(scores_data):
     """
     Displays a bar chart per category, showing the percentage for each sub-type.
     """
+    import matplotlib.pyplot as plt
+
     st.markdown("<h3>Self Assessment Scores by Category and Type</h3>", unsafe_allow_html=True)
     for category in scores_data["Category"].unique():
         st.markdown(f"### {category}", unsafe_allow_html=True)
         category_data = scores_data[scores_data["Category"] == category]
-        category_data = category_data.sort_values(by=["Type"], ascending=[False])
+        # sort by type descending (or ascending if preferred)
+        category_data = category_data.sort_values(by=["Type"], ascending=False)
 
         fig, ax = plt.subplots(figsize=(10, 4))
         ax.barh(category_data["Type"], category_data["Percentage"], color='#377bff')
@@ -197,13 +174,13 @@ def custom_bar_chart(scores_data):
         ax.set_title(category, fontsize=14)
         ax.tick_params(axis='both', which='major', labelsize=10)
         plt.tight_layout()
-
         st.pyplot(fig)
 
 ###############################################################################
 # 4. Main Streamlit UI
 ###############################################################################
 def main():
+    # Count visits
     if 'unique_visits' not in st.session_state:
         st.session_state.unique_visits = 0
     st.session_state.unique_visits += 1
@@ -222,63 +199,59 @@ def main():
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
-    # Shuffle questions if not already done
-    if 'shuffled_questions' not in st.session_state:
-        st.session_state['shuffled_questions'] = questions_list.copy()
-        random.shuffle(st.session_state['shuffled_questions'])
+    # Display questions in a fixed order, with headers
+    responses = display_questions_ordered(categories)
 
-    # Display the questions
-    responses = display_questions()
-
-    # Calculate total + per-category scores
-    total_score = calculate_total_score(responses)
-    total_scores_per_category = calculate_total_scores_per_category(responses)
-    max_scores_per_category = calculate_max_scores_per_category(categories)
-
+    # Once user clicks Submit
     if st.button("Submit"):
         st.write("## Assessment Complete. Here are your results:")
 
-        # Show per-category progress
-        for category_name, score in total_scores_per_category.items():
-            max_score = max_scores_per_category[category_name]
-            st.write(f"**{category_name}: {score} out of {max_score}**")
-            progress = int((score / max_score) * 100)
-            custom_progress_bar(progress)
+        # Calculate total + per-category scores
+        total_score = calculate_total_score(responses)
+        total_scores_per_category = calculate_total_scores_per_category(responses)
+        max_scores_per_category = calculate_max_scores_per_category(categories)
 
-        # Build data for bar charts
+        for cat_name, score_value in total_scores_per_category.items():
+            max_score = max_scores_per_category[cat_name]
+            st.write(f"**{cat_name}: {score_value} out of {max_score}**")
+            progress_pct = int((score_value / max_score) * 100)
+            custom_progress_bar(progress_pct)
+
+        # Prepare data for bar chart
         flattened_scores = []
-        for category_name, types in categories.items():
-            for type_name, questions in types.items():
-                response_scores = [
-                    r['score'] for r in responses
-                    if r['category'] == category_name and r['type'] == type_name
+        for cat_name, sub_sections in categories.items():
+            for section_title, question_list in sub_sections.items():
+                # sum up the user scores in that sub-section
+                sub_scores = [
+                    r['score'] 
+                    for r in responses 
+                    if r['category'] == cat_name and r['type'] == section_title
                 ]
-                score = sum(response_scores)
-                max_score_type = len(questions) * 4
-                percentage = (score / max_score_type) * 100
+                sub_total_score = sum(sub_scores)
+                sub_max_score = len(question_list) * 4
+                sub_percentage = (sub_total_score / sub_max_score) * 100
                 flattened_scores.append({
-                    "Category": category_name,
-                    "Type": type_name,
-                    "Score": score,
-                    "Percentage": percentage
+                    "Category": cat_name,
+                    "Type": section_title,
+                    "Score": sub_total_score,
+                    "Percentage": sub_percentage
                 })
 
         scores_data = pd.DataFrame(flattened_scores)
-        # Sort to keep categories in the order they appear
-        ordered_categories = scores_data["Category"].unique()
+        # This ensures the order of categories is the same as definition
+        ordered_categories = list(scores_data["Category"].unique())
         scores_data["Category"] = pd.Categorical(
-            scores_data["Category"],
-            categories=ordered_categories,
+            scores_data["Category"], 
+            categories=ordered_categories, 
             ordered=True
         )
-        scores_data = scores_data.sort_values(by=["Category", "Type"], ascending=[True, False])
+        # Sort by (Category, Type) if you like
+        scores_data = scores_data.sort_values(by=["Category", "Type"], ascending=[True, True])
 
-        # Create bar charts
+        # Show the bar charts
         custom_bar_chart(scores_data)
 
-        # -------------------------------------------
         # Provide the existing PDF for download
-        # -------------------------------------------
         with open(EXISTING_PDF_PATH, "rb") as pdf_file:
             PDF_CONTENT = pdf_file.read()
 
