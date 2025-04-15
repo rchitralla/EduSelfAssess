@@ -213,7 +213,7 @@ def main():
 
     # PAGE 1
     if st.session_state["page"] == 1:
-        st.markdown(f"## Page 1: {main_category_name}")
+        st.markdown(f"## Page 1")
         display_sections(page_1_sections)
 
         # Button -> go to Page 2
@@ -222,7 +222,7 @@ def main():
 
     # PAGE 2
     elif st.session_state["page"] == 2:
-        st.markdown(f"## Page 2: {main_category_name}")
+        st.markdown(f"## Page 2")
         display_sections(page_2_sections)
 
         # "Back" button to revisit Page 1
