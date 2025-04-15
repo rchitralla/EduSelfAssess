@@ -98,19 +98,19 @@ page_2_sections = [
 def ensure_question_keys_exist():
     """
     Ensure that for every question in all_sections, a default session_state key 
-    exists (so we never get a KeyError). 
-    You can choose None or 1 as the default if missing.
+    exists (so we never get a KeyError). Use None as the default to indicate 
+    the question hasn't been answered yet.
     """
     for section_name, question_list in all_sections.items():
         for question_text in question_list:
             key = f"{main_category_name}_{section_name}_{question_text}"
             if key not in st.session_state:
-                st.session_state[key] = None  # or 1 if you prefer a numeric default
+                st.session_state[key] = None
 
 def display_sections(section_list):
     """
-    Displays the given sections as headings + selectboxes (for that subset).
-    Returns all user responses for these sections as a list of dicts.
+    Displays the given sections (subsets of all_sections) as headings + selectboxes.
+    Returns all user responses as a list of dicts.
     """
     responses = []
     for section_name in section_list:
@@ -119,7 +119,7 @@ def display_sections(section_list):
         for question_text in questions:
             key = f"{main_category_name}_{section_name}_{question_text}"
 
-            # If the key is missing or None, default index to 0 (i.e. "1" on the selectbox).
+            # If the user never set an answer (None), default to 1
             current_val = st.session_state[key]
             if current_val not in [1, 2, 3, 4]:
                 current_val = 1
@@ -127,7 +127,7 @@ def display_sections(section_list):
             chosen_score = st.selectbox(
                 label=question_text,
                 options=[1, 2, 3, 4],
-                index=[1, 2, 3, 4].index(current_val),
+                index=[1,2,3,4].index(current_val),
                 key=key
             )
             responses.append({
@@ -137,41 +137,6 @@ def display_sections(section_list):
                 "score": chosen_score
             })
     return responses
-
-def count_answered_questions():
-    """
-    Counts how many questions in the entire assessment have a numeric answer in session_state.
-    """
-    answered = 0
-    for section_name, question_list in all_sections.items():
-        for question_text in question_list:
-            key = f"{main_category_name}_{section_name}_{question_text}"
-            val = st.session_state.get(key, None)
-            if val in [1, 2, 3, 4]:
-                answered += 1
-    return answered
-
-def total_number_of_questions():
-    return sum(len(questions) for questions in all_sections.values())
-
-def show_progress_bar():
-    """
-    Shows how many questions answered so far out of total, as a horizontal progress bar.
-    """
-    answered = count_answered_questions()
-    total_q = total_number_of_questions()
-    pct = int((answered / total_q) * 100)
-
-    st.markdown(
-        f"""
-        <div style="width: 100%; background-color: #e0e0e0; border-radius: 5px; margin-top: 15px;">
-            <div style="width: {pct}%; background-color: #377bff; padding: 5px; color: white; text-align: center; border-radius: 5px;">
-                {answered} of {total_q} questions answered ({pct}%)
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
 def calculate_total_scores_per_category(responses):
     total_scores_per_category = {}
@@ -186,8 +151,8 @@ def calculate_max_scores_per_category():
     """
     For the single category we have, total questions * 4 = max points.
     """
-    all_q = total_number_of_questions()
-    return {main_category_name: all_q * 4}
+    total_questions = sum(len(q) for q in all_sections.values())
+    return {main_category_name: total_questions * 4}
 
 def custom_progress_bar(percentage, color="#377bff"):
     """
@@ -226,10 +191,10 @@ def custom_bar_chart(scores_data):
 # 4. Main Streamlit UI
 ###############################################################################
 def main():
-    # First, ensure all question keys exist in session_state
+    # Initialize all question keys to avoid KeyError
     ensure_question_keys_exist()
 
-    # Track which "page" we're on
+    # Track which "page" the user is on
     if "page" not in st.session_state:
         st.session_state["page"] = 1
 
@@ -255,23 +220,18 @@ def main():
     # PAGE 1
     if st.session_state["page"] == 1:
         st.markdown(f"## Page 1: {main_category_name}")
-        # Show the first set of sections
         display_sections(page_1_sections)
 
-        # "Next" button -> go to page 2
+        # Button -> go to Page 2
         if st.button("Next →"):
             st.session_state["page"] = 2
-
-        # Show progress bar (how many questions so far)
-        show_progress_bar()
 
     # PAGE 2
     elif st.session_state["page"] == 2:
         st.markdown(f"## Page 2: {main_category_name}")
-        # Show the second set of sections
         display_sections(page_2_sections)
 
-        # Optional "Back" button if you want to revisit Page 1
+        # Optionally add a "Back" button to revisit Page 1
         # if st.button("← Back"):
         #     st.session_state["page"] = 1
         #     st.experimental_rerun()
@@ -295,7 +255,7 @@ def main():
             # Calculate total + per-category
             total_scores_per_cat = calculate_total_scores_per_category(all_responses)
             max_scores_per_cat = calculate_max_scores_per_category()
-            # Show progress bars for each category
+            # Show per-category progress bars
             for cat_name, cat_score in total_scores_per_cat.items():
                 cat_max = max_scores_per_cat[cat_name]
                 st.write(f"**{cat_name}: {cat_score} out of {cat_max}**")
@@ -334,9 +294,6 @@ def main():
             except FileNotFoundError:
                 st.error("PDF file not found. Check your path or filename.")
 
-        # Show progress bar
-        show_progress_bar()
-
     # Footer
     st.markdown(
         f"""
@@ -349,7 +306,6 @@ def main():
         """,
         unsafe_allow_html=True
     )
-
 
 if __name__ == "__main__":
     main()
