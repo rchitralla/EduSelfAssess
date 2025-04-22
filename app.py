@@ -206,8 +206,9 @@ def main():
 
     st.title("Actionable Allyship Self-Assessment")
     st.write(
-        """This confidential assessment aligns with the All In Action Framework. 
-        It is designed to reveal your current allyship strengths and opportunities for growth."""
+        """This confidential assessment aligns with the All In Action Framework. It is designed to reveal your current allyship strengths and opportunities for growth. 
+        Read each of the action statements and give each one a score from 1-4 based on how often you demonstrate them. 
+        It should take no longer than 10 minutes to complete and will provide you with a personalised set of results to support your ongoing leadership development"""
     )
     st.write("### Rating Scale: 1 = Never | 2 = Rarely | 3 = Sometimes | 4 = Often")
 
