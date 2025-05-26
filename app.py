@@ -1,6 +1,31 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import time 
+
+# ────────────────
+# 1) PING HANDLER
+# ────────────────
+# If someone visits with ?ping=1, immediately return 200 OK and exit.
+params = st.experimental_get_query_params()
+if "ping" in params:
+    st.stop()  # short-circuits and returns a blank 200
+
+# ────────────────
+# 2) CACHING SETUP
+# ────────────────
+@st.cache_resource  # stays alive until code changes
+def load_model():
+    # simulate heavy ML model load
+    import tensorflow as tf
+    model = tf.keras.models.load_model("path/to/model")
+    return model
+
+@st.cache_data(ttl=3600)  # refresh every hour
+def load_data():
+    import pandas as pd
+    df = pd.read_csv("data/huge_dataset.csv")
+    return df
 
 ###############################################################################
 # 1. Page and Image Paths
